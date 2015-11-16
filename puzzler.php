@@ -8,25 +8,50 @@ Author: Igor Antoshkin
 Author URI: http://buckler.dp.ua
 */
 
+if ( ! is_admin() && puzzler_check_permissions() ) {
+
 // Off print footer scripts by default
-add_filter('print_footer_scripts' , 'puzzler_off_footer_scripts');
+    add_filter('print_footer_scripts', 'puzzler_off_footer_scripts');
+
+// Off print header scripts by default
+    add_filter('print_head_scripts', 'puzzler_off_header_scripts');
+
+// Off print late styles by default
+    add_filter('print_late_styles', 'puzzler_off_late_styles');
+
+// Remove standard behavior
+    remove_action('wp_print_footer_scripts', '_wp_footer_scripts');
+    remove_action('wp_head', 'wp_print_styles', 8);
+    remove_action('wp_head', 'wp_print_head_scripts', 9);
+
+// Add puzzler behavior for header styles
+    add_action('wp_head', 'puzzler_header_styles', 8);
+
+// Add puzzler behavior for header scripts
+    add_action('wp_head', 'puzzler_header_scripts', 9);
+
+// Add puzzler behavior for footer scripts
+    add_action('wp_print_footer_scripts', 'puzzler_footer_scripts');
+
+}
+
+function puzzler_check_permissions() {
+    //TODO: check create cache folder and files ( in after_activate plugin )
+    return true;
+}
+
 function puzzler_off_footer_scripts() {
     return false;
 }
 
-// Off print header scripts by default
-add_filter('print_head_scripts' , 'puzzler_off_header_scripts');
 function puzzler_off_header_scripts() {
     return false;
 }
 
-// Remove standard behavior
-remove_action('wp_print_footer_scripts', '_wp_footer_scripts');
-remove_action('wp_head', 'wp_print_head_scripts' , 9);
+function puzzler_off_late_styles() {
+    return false;
+}
 
-
-// Add puzzler behavior for footer scripts
-add_action('wp_print_footer_scripts' , 'puzzler_footer_scripts' );
 function puzzler_footer_scripts() {
 
     puzzler_class_changer();
@@ -35,18 +60,41 @@ function puzzler_footer_scripts() {
     print_footer_scripts();
 }
 
-// Add puzzler behavior for header scripts
-add_action('wp_head', 'puzzler_header_scripts' ,9);
+function puzzler_header_styles( $handles = false ) {
+    if ( '' === $handles ) { // for wp_head
+        $handles = false;
+    }
+    /**
+     * Fires before styles in the $handles queue are printed.
+     *
+     * @since 2.6.0
+     */
+    if ( ! $handles ) {
+        do_action( 'wp_print_styles' );
+    }
+
+    _wp_scripts_maybe_doing_it_wrong( __FUNCTION__ );
+
+    puzzler_class_changer();
+
+    global $wp_styles;
+    if ( ! ( $wp_styles instanceof WP_Styles ) ) {
+        if ( ! $handles ) {
+            return array(); // No need to instantiate if nothing is there.
+        }
+    }
+
+    return wp_styles()->do_items( $handles );
+}
+
 function puzzler_header_scripts() {
     if ( ! did_action('wp_print_scripts') ) {
-
         do_action( 'wp_print_scripts' );
     }
 
     puzzler_class_changer();
 
     global $wp_scripts;
-
     if ( ! ( $wp_scripts instanceof WP_Scripts ) ) {
         return array(); // no need to run if nothing is queued
     }
@@ -67,16 +115,20 @@ function puzzler_class_changer() {
 
 }
 
+trait PUZZLER_Base {
+
+}
 
 class PUZZLER_Scripts extends WP_Scripts {
 
-    public $scriptNameHeader      = 'all-header.js';
-    public $scriptNameFooter      = 'all-footer.js';
-    public $cacheDir              = 'cache';
+    public $fileNameHeader      = 'all-header.js';
+    public $fileNameFooter      = 'all-footer.js';
+    public $cacheDir            = 'cache';
 
-    private $digest               = "/** ## %s ## **/\n";
-    private $mapState             = '';
-    private $scriptFullPath       = '';
+    private $fileFullPath       = '';
+
+    private $mapStateTemplate     = "/** ## %s ## **/\n";
+    private $mapStateDigest       = '';
 
     public function import( $object ) {
 
@@ -102,7 +154,7 @@ class PUZZLER_Scripts extends WP_Scripts {
 
         /**
          * Set map states of scripts.
-         * It for efficient detecting of change in puzzler_check_change()
+         * It for efficient detecting of changes in puzzler_check_change()
          *
          */
         if ( 0 === $group ) {
@@ -132,8 +184,8 @@ class PUZZLER_Scripts extends WP_Scripts {
 
     protected function puzzler_prepare_script_name( $group ) {
 
-        $this->scriptFullPath = WP_CONTENT_DIR . '/' . $this->cacheDir . '/';
-        $this->scriptFullPath .= ( 0 === $group ) ? $this->scriptNameHeader : $this->scriptNameFooter;
+        $this->fileFullPath = WP_CONTENT_DIR . '/' . $this->cacheDir . '/';
+        $this->fileFullPath .= ( 0 === $group ) ? $this->fileNameHeader : $this->fileNameFooter;
 
     }
 
@@ -233,7 +285,7 @@ class PUZZLER_Scripts extends WP_Scripts {
     protected function puzzler_combine( $group ) {
 
         $this->concat = "/** Combined by WP Puzzler plugin at " . current_time( 'mysql' ) . " **/\n";
-        $this->concat .= $this->mapState;
+        $this->concat .= $this->mapStateDigest;
 
         foreach( $this->to_do as $key => $handle ) {
 
@@ -251,9 +303,9 @@ class PUZZLER_Scripts extends WP_Scripts {
             unset( $this->to_do[$key] );
         }
 
-        if ( ! file_exists( dirname( $this->scriptFullPath ) ) && ! $this->puzzler_create_cache_dir() ) throw new Exception('Please, create folder ' . dirname( $this->scriptFullPath ) . ' with 0777 file mode (Permissions problem)');
+        if ( ! file_exists( dirname( $this->fileFullPath ) ) && ! $this->puzzler_create_cache_dir() ) throw new Exception('Please, create folder ' . dirname( $this->fileFullPath ) . ' with 0777 file mode (Permissions problem)');
 
-        file_put_contents( $this->scriptFullPath, $this->concat );
+        file_put_contents( $this->fileFullPath, $this->concat );
 
     }
 
@@ -270,7 +322,7 @@ class PUZZLER_Scripts extends WP_Scripts {
             $hash = md5( serialize( $data ) );
         }
 
-        $this->mapState = sprintf( $this->digest , $hash );
+        $this->mapStateDigest = sprintf( $this->mapStateTemplate , $hash );
 
     }
 
@@ -286,14 +338,14 @@ class PUZZLER_Scripts extends WP_Scripts {
                 continue;
             }
 
-            if ( filemtime( $this->puzzler_get_src_local( $this->registered[$handle]->src ) ) > (int)@filemtime( $this->scriptFullPath ) ) {
+            if ( filemtime( $this->puzzler_get_src_local( $this->registered[$handle]->src ) ) > (int)@filemtime( $this->fileFullPath ) ) {
                 return true;
             }
 
         }
 
         // -- check change by map state
-        $script = @fopen( $this->scriptFullPath , "r");
+        $script = @fopen( $this->fileFullPath , "r");
         $line = '';
         if ( $script ) {
             for( $i=0; $i < 2; $i++) {
@@ -302,8 +354,8 @@ class PUZZLER_Scripts extends WP_Scripts {
             fclose( $script );
         }
 
-        list( $new_map ) = sscanf( $this->mapState , $this->digest );
-        list( $old_map ) = sscanf( $line , $this->digest );
+        list( $new_map ) = sscanf( $this->mapStateDigest , $this->mapStateTemplate );
+        list( $old_map ) = sscanf( $line , $this->mapStateTemplate );
 
 
         return ( $new_map !== $old_map ) ? true : false;
@@ -316,8 +368,8 @@ class PUZZLER_Scripts extends WP_Scripts {
 
     protected function puzzler_print_script_tag( $ver = null ) {
 
-        $ver = ( empty ( $ver ) ) ? md5_file( $this->scriptFullPath ) : $ver;
-        $src_half = strstr($this->scriptFullPath, 'wp-content');
+        $ver = ( empty ( $ver ) ) ? md5_file( $this->fileFullPath ) : $ver;
+        $src_half = strstr($this->fileFullPath, 'wp-content');
 
         $src = $this->base_url .'/'. $src_half;
 
@@ -328,15 +380,21 @@ class PUZZLER_Scripts extends WP_Scripts {
 
 class PUZZLER_Styles extends WP_Styles {
 
-    public $ololo;
+    public function import( $object ) {
 
-    public function import( $object )
-    {
-        $vars = is_object( $object ) ? get_object_vars( $object ) : $object;
-        if ( ! is_array( $vars ) ) throw Exception('no props to import into the object!');
-        foreach ( $vars as $key => $value) {
-            $this->$key = $value;
+        if ( ! $object instanceof WP_Dependencies ) {
+            throw new Exception('You must import only WP_Scripts/WP_Styles object!');
         }
+
+        $props = get_object_vars( $object );
+        if ( ! is_array( $props ) ) throw new Exception('No props to import into the object!');
+
+        foreach ( $props as $key => $value) {
+            if ( property_exists( $this, $key ) ) {
+                $this->$key = $value;
+            }
+        }
+
     }
 
 }

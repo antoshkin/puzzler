@@ -496,7 +496,7 @@ class PUZZLER_Styles extends WP_Styles {
 
             // -- change link tag, for lazy load
             if ( $is_lazy_foot_styles ) {
-                add_filter('style_loader_tag', array( $this, 'puzzler_styles_lazy_footer' ) );
+                add_filter('style_loader_tag', array( $this, 'puzzler_styles_change_tag' ) );
             }
 
             if ( parent::do_item( $handle ) ) {
@@ -508,12 +508,11 @@ class PUZZLER_Styles extends WP_Styles {
         }
 
         return true;
-
     }
 
-    public function puzzler_styles_lazy_footer ( $tag ) {
+    public function puzzler_styles_change_tag ( $tag ) {
 
-        $lazy_style = str_replace('link' , 'lazyfootcss', $tag);
+        $lazy_style = str_replace( 'link' , 'lazyfootcss', $tag );
         return $lazy_style;
 
     }

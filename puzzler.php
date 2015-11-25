@@ -31,7 +31,7 @@ if ( is_admin() ) {
             'FStylesLazy'       => true ,
             'FScriptsAsync'     => true
         );
-        $settings = get_option( 'puzzler_settings' , array() );
+        $settings = get_option( 'puzzler_settings' , $default_settings );
 
         // -- check errors
         $errors = puzzler_is_permissions_settings();

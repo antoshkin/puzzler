@@ -22,6 +22,15 @@ if ( is_admin() ) {
         echo "<h2>Puzzler</h2>";
 
         // -- get puzzler settings
+        $default_settings = array(
+            'HStylesCombine'    => true,
+            'HScriptsCombine'   => true,
+            'FScriptsCombine'   => true,
+            'HStylesLazy'       => true ,
+            'HScriptsAsync'     => false,
+            'FStylesLazy'       => true ,
+            'FScriptsAsync'     => true
+        );
         $settings = get_option( 'puzzler_settings' , array() );
 
         // -- check errors

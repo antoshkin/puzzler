@@ -8,7 +8,100 @@ Author: Igor Antoshkin
 Author URI: http://buckler.dp.ua
 */
 
-if ( ! is_admin() && puzzler_is_permissions() ) {
+if ( is_admin() ) {
+
+    // -- add admin menu item
+    add_action('admin_menu', 'puzzler_admin_add_menu');
+    function puzzler_admin_add_menu(){
+        add_menu_page('Puzzler', 'Puzzler', 'administrator', 'puzzler', 'puzzler_admin_show');
+    }
+
+    function puzzler_admin_show() {
+
+        echo "<div class='wrap'>";
+        echo "<h2>Puzzler</h2>";
+
+        // -- get puzzler settings
+        $settings = get_option( 'puzzler_settings' , array() );
+
+        // -- check errors
+        $errors = puzzler_is_permissions_settings();
+        if ( ! empty( $errors ) ) {
+            foreach ( $errors as $e ) {
+                echo "<div class='notice notice-error'>  <p> {$e} </p> </div>";
+            }
+        }
+
+        echo "<form id='form-puzzler' method='post'>";
+
+            wp_nonce_field( 'puzzler_nonce' );
+
+        echo "<button>" .__( 'Save' , 'puzzler' ). "</button>";
+
+        echo "</form>";
+        echo "</div>";
+    }
+
+}
+
+// -- on activate Puzzler plugin
+register_activation_hook( __FILE__, 'puzzler_plugin_activate' );
+function puzzler_plugin_activate() {
+
+    $cacheDir = ABSPATH . PUZZLER_Trait::$cacheDir;
+
+    if ( ! file_exists( $cacheDir ) ) {
+        @mkdir( $cacheDir , 0777 , true );
+    }
+
+}
+
+// -- check permissions on frontend
+function puzzler_is_permissions_front() {
+
+    // -- we are use traits
+    if ( version_compare( phpversion(),  "5.4" , "<") ) return false;
+
+    // -- check on writable cache dir
+    if ( ! is_writable( ABSPATH . PUZZLER_Trait::$cacheDir ) ) return false;
+
+    return true;
+
+}
+
+// -- check permissions from plugin settings
+function puzzler_is_permissions_settings() {
+
+    $errors = array();
+
+    if ( version_compare( phpversion(),  "5.4" , "<") ) {
+        $errors[] = __( 'Hey, Puzzler plugin requires PHP 5.4 or greater to run. Please, fix it problem :)' , 'puzzler');
+    }
+
+    if ( ! is_writable( ABSPATH . PUZZLER_Trait::$cacheDir ) ) {
+        $errors[] = sprintf( __( 'Please, create %s folder with 0777 permissions' , 'puzzler'), ABSPATH . PUZZLER_Trait::$cacheDir );
+    };
+
+    return $errors;
+
+}
+
+// -- run on frontend
+if ( ! is_admin() && puzzler_is_permissions_front() ) {
+
+// Remove standard behavior
+    remove_action('wp_print_footer_scripts', '_wp_footer_scripts');
+    remove_action('wp_head', 'wp_print_styles', 8 );
+    remove_action('wp_head', 'wp_print_head_scripts', 9 );
+
+// Add puzzler behavior for header styles
+    add_action('wp_head', 'puzzler_header_styles', 8 );
+
+// Add puzzler behavior for header scripts
+    add_action('wp_head', 'puzzler_header_scripts', 9 );
+
+// Add puzzler behavior for footer scripts
+    add_action('wp_print_footer_scripts', 'puzzler_footer_scripts');
 
 // Off print footer scripts by default
     add_filter('print_footer_scripts', 'puzzler_off_footer_scripts');
@@ -19,39 +112,7 @@ if ( ! is_admin() && puzzler_is_permissions() ) {
 // Off print late styles by default
     add_filter('print_late_styles', 'puzzler_off_late_styles');
 
-// Remove standard behavior
-    remove_action('wp_print_footer_scripts', '_wp_footer_scripts');
-    remove_action('wp_head', 'wp_print_styles', 8);
-    remove_action('wp_head', 'wp_print_head_scripts', 9);
-
-// Add puzzler behavior for header styles
-    add_action('wp_head', 'puzzler_header_styles', 8);
-
-// Add puzzler behavior for header scripts
-    add_action('wp_head', 'puzzler_header_scripts', 9);
-
-// Add puzzler behavior for footer scripts
-    add_action('wp_print_footer_scripts', 'puzzler_footer_scripts');
-
 }
-
-function puzzler_is_permissions() {
-    //TODO: check create cache folder and files ( in after_activate plugin )
-    // Only PHP 5.4 (traits)
-
-    /*
-     *
-     *     protected function puzzler_create_cache_dir() {
-        return mkdir( WP_CONTENT_DIR . '/' . $this->cacheDir , 0777 , true);
-    }
-     * is_writable() ?
-     *
-     * */
-
-    return true;
-}
-
-
 
 function puzzler_off_footer_scripts() {
     return false;
@@ -130,7 +191,7 @@ function puzzler_class_changer() {
 
 trait PUZZLER_Trait {
 
-    public $cacheDir            = 'cache';
+    public static $cacheDir     = 'wp-content/cache';
 
     private $fileFullPath       = '';
 
@@ -140,7 +201,7 @@ trait PUZZLER_Trait {
     public function import( $object ) {
 
         if ( ! $object instanceof WP_Dependencies ) {
-            throw new Exception('You must import only WP_Scripts/WP_Styles object!');
+            throw new Exception( __( 'You must import only WP_Scripts/WP_Styles object!' , 'puzzler' ) );
         }
 
         $props = get_object_vars( $object );
@@ -223,7 +284,7 @@ trait PUZZLER_Trait {
 
     protected function puzzler_prepare_file_name( $group ) {
 
-        $this->fileFullPath = WP_CONTENT_DIR . '/' . $this->cacheDir . '/';
+        $this->fileFullPath =  ABSPATH . static::$cacheDir . '/' ;
         $this->fileFullPath .= ( 0 === $group ) ? $this->fileNameHeader : $this->fileNameFooter;
 
     }
@@ -359,6 +420,9 @@ class PUZZLER_Scripts extends WP_Scripts {
     public $fileNameHeader      = 'all-header.js';
     public $fileNameFooter      = 'all-footer.js';
 
+    public $asyncHead           = false;
+    public $asyncFoot           = true;
+
     protected function puzzler_print_extra ( $group ) {
 
         foreach( $this->to_do as $key => $handle ) {
@@ -408,8 +472,13 @@ class PUZZLER_Scripts extends WP_Scripts {
             return;
         }
 
+        $async = '';
+        if ( ( 0 === $group && $this->asyncHead ) || ( 1 === $group && $this->asyncFoot ) ) {
+            $async = 'async';
+        }
+
         $src = $this->puzzler_get_src_tag();
-        echo "<script type='text/javascript' src='$src'></script>\n";
+        echo "<script {$async} type='text/javascript' src='$src'></script>\n";
 
     }
 
@@ -421,6 +490,9 @@ class PUZZLER_Styles extends WP_Styles {
 
     public $fileNameHeader      = 'all-header.css';
     public $fileNameFooter      = 'all-footer.css';
+
+    public $lazyHead            = true;
+    public $lazyFoot            = true;
 
     private $_headStyles;
 
@@ -482,8 +554,8 @@ class PUZZLER_Styles extends WP_Styles {
             return false;
         }
 
-        if ( $is_lazy_foot_styles = true ) {
-            $lazy_starter = "<script>var cb=function(){for(var e=document.getElementsByTagName('lazyfootcss'),a=0;a<e.length;a++)e[a].outerHTML=e[a].outerHTML.replace(/lazyfootcss/g,'link')},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(cb):window.addEventListener('load',cb);</script>\n";
+        if ( $this->lazyFoot && in_array( $group , $this->groups ) ) {
+            $lazy_starter = "<script>var lazyfoot=function(){for(var e=document.getElementsByTagName('linklazy'),a=0;a<e.length;a++)e[a].outerHTML=e[a].outerHTML.replace(/linklazy/g,'link')},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(lazyfoot):window.addEventListener('load',lazyfoot);</script>\n";
             echo $lazy_starter;
         }
 
@@ -495,7 +567,7 @@ class PUZZLER_Styles extends WP_Styles {
             }
 
             // -- change link tag, for lazy load
-            if ( $is_lazy_foot_styles ) {
+            if ( $this->lazyFoot ) {
                 add_filter('style_loader_tag', array( $this, 'puzzler_styles_change_tag' ) );
             }
 
@@ -512,7 +584,7 @@ class PUZZLER_Styles extends WP_Styles {
 
     public function puzzler_styles_change_tag ( $tag ) {
 
-        $lazy_style = str_replace( 'link' , 'lazyfootcss', $tag );
+        $lazy_style = str_replace( 'link' , 'linklazy', $tag );
         return $lazy_style;
 
     }
@@ -552,7 +624,13 @@ class PUZZLER_Styles extends WP_Styles {
         }
 
         $src = $this->puzzler_get_src_tag();
-        echo "<link rel='stylesheet' href='$src' type='text/css' media='all' />\n";
+        if ( 0 === $group && $this->lazyHead ) {
+            $lazy_starter = "<script>var lazyhead=function(){var e=document.createElement('link');e.rel='stylesheet',e.href='{$src}',e.type='text/css',e.media='all';var a=document.getElementsByTagName('head')[0];a.appendChild(e)},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(lazyhead):window.addEventListener('load',lazyhead);</script>\n";
+            echo $lazy_starter;
+        } else {
+            echo "<link rel='stylesheet' href='$src' type='text/css' media='all' />\n";
+        }
+
 
     }
 

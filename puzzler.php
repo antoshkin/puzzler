@@ -18,9 +18,6 @@ if ( is_admin() ) {
 
     function puzzler_get_default_settings() {
         return array(
-            //'HStylesCombine'    => true,
-            //'HScriptsCombine'   => true,
-            //'FScriptsCombine'   => true,
             'HStylesLazy'       => true ,
             'HScriptsAsync'     => false,
             'FStylesLazy'       => true ,
@@ -46,9 +43,14 @@ if ( is_admin() ) {
 
         echo "<form id='form-puzzler' method='post'>";
 
+        echo "<label for='hsl'>";
+            echo "<input id='hsl' type='checkbox' name='settings[HStylesLazy]' value='1' " . checked( $settings['HStylesLazy'], true ). " />";
+            echo "<input style='display:none' type='checkbox' name='settings[HStylesLazy]' value='0' />";
+        echo "</label>";
+
             wp_nonce_field( 'puzzler_nonce' );
 
-        echo "<button>" .__( 'Save' , 'puzzler' ). "</button>";
+        echo "<button>" .__( 'Save23' , 'puzzler' ). "</button>";
 
         echo "</form>";
         echo "</div>";
@@ -413,7 +415,6 @@ trait PUZZLER_Trait {
         $src = str_replace( "\\" , "/" , $src );
 
         $src_root_wp = ABSPATH . $src;
-        //$src_content = WP_CONTENT_DIR . preg_replace( '/^.*wp-content/i', '', $src );
         $src_other = ABSPATH . str_replace( $this->base_url, '' , $src );
 
 

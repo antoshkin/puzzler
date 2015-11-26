@@ -28,7 +28,14 @@ if ( is_admin() ) {
     function puzzler_admin_show() {
 
         echo "<div class='wrap'>";
-        echo "<h2>Puzzler</h2>";
+        echo "<h2>Puzzler</h2><hr>";
+
+        // -- processing submit form
+        if ( isset( $_REQUEST['settings'] ) ) {
+            check_ajax_referer( 'puzzler_nonce' );
+            $settings = array_merge( puzzler_get_default_settings() , $_REQUEST['settings'] );
+            update_option( 'puzzler_settings' , $settings );
+        }
 
         // -- get puzzler settings
         $settings = get_option( 'puzzler_settings' , puzzler_get_default_settings() );
@@ -43,14 +50,33 @@ if ( is_admin() ) {
 
         echo "<form id='form-puzzler' method='post'>";
 
-        echo "<label for='hsl'>";
-            echo "<input id='hsl' type='checkbox' name='settings[HStylesLazy]' value='1' " . checked( $settings['HStylesLazy'], true ). " />";
-            echo "<input style='display:none' type='checkbox' name='settings[HStylesLazy]' value='0' />";
-        echo "</label>";
+            echo "<input type='hidden' name='settings[HStylesLazy]' value='0' />";
+            echo "<input id='hsl' type='checkbox' name='settings[HStylesLazy]' value='1' " . checked( $settings['HStylesLazy'] , true, false ) . " />";
+            echo "<label for='hsl'>" . __( 'Lazy load styles in Header', 'puzzler' ) . "&nbsp;</label>";
+
+            echo "<br>";
+
+            echo "<input type='hidden' name='settings[HScriptsAsync]' value='0' />";
+            echo "<input id='hsa' type='checkbox' name='settings[HScriptsAsync]' value='1' " . checked( $settings['HScriptsAsync'] , true, false ) . " />";
+            echo "<label for='hsa'>" . __( 'Async load scripts in Header', 'puzzler' ) . "&nbsp;</label>";
+
+            echo "<br>";
+
+            echo "<input type='hidden' name='settings[FStylesLazy]' value='0' />";
+            echo "<input id='fsl' type='checkbox' name='settings[FStylesLazy]' value='1' " . checked( $settings['FStylesLazy'] , true, false ) . " />";
+            echo "<label for='fsl'>" . __( 'Lazy load styles in Footer', 'puzzler' ) . "&nbsp;</label>";
+
+            echo "<br>";
+
+            echo "<input type='hidden' name='settings[FScriptsAsync]' value='0' />";
+            echo "<input id='fsa' type='checkbox' name='settings[FScriptsAsync]' value='1' " . checked( $settings['FScriptsAsync'] , true, false ) . " />";
+            echo "<label for='fsa'>" . __( 'Async load scripts in Footer', 'puzzler' ) . "&nbsp;</label>";
+
+            echo "<br><br>";
 
             wp_nonce_field( 'puzzler_nonce' );
 
-        echo "<button>" .__( 'Save23' , 'puzzler' ). "</button>";
+        echo "<button onclick='this.disabled=true;'>" .__( 'Save' , 'puzzler' ). "</button>";
 
         echo "</form>";
         echo "</div>";

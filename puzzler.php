@@ -94,6 +94,11 @@ function puzzler_plugin_activate() {
         @mkdir( $cacheDir , 0777 , true );
     }
 
+    $settings = get_option( 'puzzler_settings' , array() );
+    if ( empty( $settings ) ) {
+        update_option( 'puzzler_settings' , puzzler_get_default_settings() );
+    }
+
 }
 
 // -- check permissions on frontend

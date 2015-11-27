@@ -16,15 +16,6 @@ if ( is_admin() ) {
         add_menu_page('Puzzler', 'Puzzler', 'administrator', 'puzzler', 'puzzler_admin_show');
     }
 
-    function puzzler_get_default_settings() {
-        return array(
-            'HStylesLazy'       => true ,
-            'HScriptsAsync'     => false,
-            'FStylesLazy'       => true ,
-            'FScriptsAsync'     => true
-        );
-    }
-
     function puzzler_admin_show() {
 
         echo "<div class='wrap'>";
@@ -82,6 +73,15 @@ if ( is_admin() ) {
         echo "</div>";
     }
 
+}
+
+function puzzler_get_default_settings() {
+    return array(
+        'HStylesLazy'       => true ,
+        'HScriptsAsync'     => false,
+        'FStylesLazy'       => true ,
+        'FScriptsAsync'     => true
+    );
 }
 
 // -- on activate Puzzler plugin
@@ -473,6 +473,15 @@ class PUZZLER_Scripts extends WP_Scripts {
     public $asyncHead           = false;
     public $asyncFoot           = true;
 
+
+    public function __construct() {
+
+        $settings = get_option( 'puzzler_settings' , puzzler_get_default_settings() );
+        $this->asyncHead = $settings['HScriptsAsync'];
+        $this->asyncFoot = $settings['FScriptsAsync'];
+
+    }
+
     protected function puzzler_print_extra ( $group ) {
 
         foreach( $this->to_do as $key => $handle ) {
@@ -545,6 +554,14 @@ class PUZZLER_Styles extends WP_Styles {
     public $lazyFoot            = true;
 
     private $_headStyles;
+
+    public function __construct() {
+
+        $settings = get_option( 'puzzler_settings' , puzzler_get_default_settings() );
+        $this->lazyHead = $settings['HStylesLazy'];
+        $this->lazyFoot = $settings['FStylesLazy'];
+
+    }
 
     protected function puzzler_print_extra ( $group ) {
 

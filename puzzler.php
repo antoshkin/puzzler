@@ -16,22 +16,25 @@ if ( is_admin() ) {
         add_menu_page('Puzzler', 'Puzzler', 'administrator', 'puzzler', 'puzzler_admin_show');
     }
 
+    function puzzler_get_default_settings() {
+        return array(
+            //'HStylesCombine'    => true,
+            //'HScriptsCombine'   => true,
+            //'FScriptsCombine'   => true,
+            'HStylesLazy'       => true ,
+            'HScriptsAsync'     => false,
+            'FStylesLazy'       => true ,
+            'FScriptsAsync'     => true
+        );
+    }
+
     function puzzler_admin_show() {
 
         echo "<div class='wrap'>";
         echo "<h2>Puzzler</h2>";
 
         // -- get puzzler settings
-        $default_settings = array(
-            'HStylesCombine'    => true,
-            'HScriptsCombine'   => true,
-            'FScriptsCombine'   => true,
-            'HStylesLazy'       => true ,
-            'HScriptsAsync'     => false,
-            'FStylesLazy'       => true ,
-            'FScriptsAsync'     => true
-        );
-        $settings = get_option( 'puzzler_settings' , $default_settings );
+        $settings = get_option( 'puzzler_settings' , puzzler_get_default_settings() );
 
         // -- check errors
         $errors = puzzler_is_permissions_settings();
@@ -279,10 +282,14 @@ trait PUZZLER_Trait {
             foreach( $this->to_do as $key => $handle ) {
                 $data[$handle] = array(
                     'group' => $this->groups[$handle],
-                    'src'   => $this->registered[$handle]->src,
-                    'args'  => $this->registered[$handle]->args,
-                    'extra' => $this->registered[$handle]->extra
+                    'src'   => $this->registered[$handle]->src
                 );
+
+                if ( $this instanceof WP_Styles ) {
+                    $data[$handle]['args']  = $this->registered[$handle]->args;
+                    $data[$handle]['extra'] = $this->registered[$handle]->extra;
+                }
+
             }
             $hash = md5( serialize( $data ) );
         }
@@ -395,7 +402,7 @@ trait PUZZLER_Trait {
     protected function puzzler_get_src_tag() {
 
         $ver = md5_file( $this->fileFullPath );
-        $src_half = strstr($this->fileFullPath, 'wp-content');
+        $src_half = str_replace( ABSPATH , '', $this->fileFullPath );
 
         return $this->base_url .'/'. $src_half . '?' . $ver;
 
@@ -406,10 +413,12 @@ trait PUZZLER_Trait {
         $src = str_replace( "\\" , "/" , $src );
 
         $src_root_wp = ABSPATH . $src;
-        $src_content = WP_CONTENT_DIR . preg_replace( '/^.*wp-content/i', '', $src );
+        //$src_content = WP_CONTENT_DIR . preg_replace( '/^.*wp-content/i', '', $src );
+        $src_other = ABSPATH . str_replace( $this->base_url, '' , $src );
 
-        if ( file_exists( $src_content ) ) {
-            return $src_content;
+
+        if ( file_exists( $src_other ) ) {
+            return $src_other;
         }
 
         if ( file_exists( $src_root_wp ) ) {

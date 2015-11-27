@@ -75,6 +75,7 @@ if ( is_admin() ) {
 
 }
 
+// -- declare default settings for plugin
 function puzzler_get_default_settings() {
     return array(
         'HStylesLazy'       => true ,

@@ -533,7 +533,7 @@ class PUZZLER_Scripts extends WP_Scripts {
 
         $async = '';
         if ( ( 0 === $group && $this->asyncHead ) || ( 1 === $group && $this->asyncFoot ) ) {
-            $async = 'async';
+            $async = "defer='defer'";
         }
 
         $src = $this->puzzler_get_src_tag();

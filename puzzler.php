@@ -1,11 +1,11 @@
 <?php
 /*
 Plugin Name: Puzzler
-Plugin URI: http://buckler.dp.ua/~~~/
-Description: Simple auto aggregator CSS and JS scripts for more fast load pages of site.
-Version: 1.0
+Plugin URI: http://github.com/antoshkin/puzzler
+Description: Smart simple auto aggregator CSS and JS scripts for more fast load pages of site.
+Version: 0.1 beta
 Author: Igor Antoshkin
-Author URI: http://buckler.dp.ua
+Author URI: http://github.com/antoshkin/
 */
 
 // -- in admin settings

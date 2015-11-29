@@ -471,15 +471,15 @@ class PUZZLER_Scripts extends WP_Scripts {
     public $fileNameHeader      = 'all-header.js';
     public $fileNameFooter      = 'all-footer.js';
 
-    public $asyncHead           = false;
-    public $asyncFoot           = true;
+    private $_asyncHead;
+    private $_asyncFoot;
 
 
     public function __construct() {
 
         $settings = get_option( 'puzzler_settings' , puzzler_get_default_settings() );
-        $this->asyncHead = $settings['HScriptsAsync'];
-        $this->asyncFoot = $settings['FScriptsAsync'];
+        $this->_asyncHead = $settings['HScriptsAsync'];
+        $this->_asyncFoot = $settings['FScriptsAsync'];
 
     }
 
@@ -533,7 +533,7 @@ class PUZZLER_Scripts extends WP_Scripts {
         }
 
         $async = '';
-        if ( ( 0 === $group && $this->asyncHead ) || ( 1 === $group && $this->asyncFoot ) ) {
+        if ( ( 0 === $group && $this->_asyncHead ) || ( 1 === $group && $this->_asyncFoot ) ) {
             $async = "defer='defer'";
         }
 
@@ -551,16 +551,16 @@ class PUZZLER_Styles extends WP_Styles {
     public $fileNameHeader      = 'all-header.css';
     public $fileNameFooter      = 'all-footer.css';
 
-    public $lazyHead            = true;
-    public $lazyFoot            = true;
+    private $_lazyHead;
+    private $_lazyFoot;
 
     private $_headStyles;
 
     public function __construct() {
 
         $settings = get_option( 'puzzler_settings' , puzzler_get_default_settings() );
-        $this->lazyHead = $settings['HStylesLazy'];
-        $this->lazyFoot = $settings['FStylesLazy'];
+        $this->_lazyHead = $settings['HStylesLazy'];
+        $this->_lazyFoot = $settings['FStylesLazy'];
 
     }
 
@@ -622,8 +622,8 @@ class PUZZLER_Styles extends WP_Styles {
             return false;
         }
 
-        if ( $this->lazyFoot && in_array( $group , $this->groups ) ) {
-            $lazy_starter = "<script>var lazyfoot=function(){for(var e=document.getElementsByTagName('linklazy'),a=0;a<e.length;a++)e[a].outerHTML=e[a].outerHTML.replace(/linklazy/g,'link')},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(lazyfoot):window.addEventListener('load',lazyfoot);</script>\n";
+        if ( $this->_lazyFoot && in_array( $group , $this->groups ) ) {
+            $lazy_starter = "<script>var _lazyFoot=function(){for(var e=document.getElementsByTagName('linklazy'),a=0;a<e.length;a++)e[a].outerHTML=e[a].outerHTML.replace(/linklazy/g,'link')},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(_lazyFoot):window.addEventListener('load',_lazyFoot);</script>\n";
             echo $lazy_starter;
         }
 
@@ -635,7 +635,7 @@ class PUZZLER_Styles extends WP_Styles {
             }
 
             // -- change link tag, for lazy load
-            if ( $this->lazyFoot ) {
+            if ( $this->_lazyFoot ) {
                 add_filter('style_loader_tag', array( $this, 'puzzler_styles_change_tag' ) );
             }
 
@@ -692,9 +692,9 @@ class PUZZLER_Styles extends WP_Styles {
         }
 
         $src = $this->puzzler_get_src_tag();
-        if ( 0 === $group && $this->lazyHead ) {
-            //$lazy_starter = "<script>var lazyhead=function(){var e=document.createElement('link');e.rel='stylesheet',e.href='{$src}',e.type='text/css',e.media='all';var a=document.getElementsByTagName('head')[0];a.appendChild(e)},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(lazyhead):window.addEventListener('load',lazyhead);</script>\n";
-            $lazy_starter = "<script>var lazyhead=function(){var e=document.createElement('link');e.rel='stylesheet',e.href='{$src}',e.type='text/css',e.media='all';var a=document.getElementsByTagName('head')[0];a.appendChild(e)};window.addEventListener('load',lazyhead);</script>\n";
+        if ( 0 === $group && $this->_lazyHead ) {
+            //$lazy_starter = "<script>var _lazyHead=function(){var e=document.createElement('link');e.rel='stylesheet',e.href='{$src}',e.type='text/css',e.media='all';var a=document.getElementsByTagName('head')[0];a.appendChild(e)},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(_lazyHead):window.addEventListener('load',_lazyHead);</script>\n";
+            $lazy_starter = "<script>var lazyHead=function(){var e=document.createElement('link');e.rel='stylesheet',e.href='{$src}',e.type='text/css',e.media='all';var a=document.getElementsByTagName('head')[0];a.appendChild(e)};window.addEventListener('load',lazyHead);</script>\n";
             echo $lazy_starter;
         } else {
             echo "<link rel='stylesheet' href='$src' type='text/css' media='all' />\n";

@@ -693,7 +693,8 @@ class PUZZLER_Styles extends WP_Styles {
 
         $src = $this->puzzler_get_src_tag();
         if ( 0 === $group && $this->lazyHead ) {
-            $lazy_starter = "<script>var lazyhead=function(){var e=document.createElement('link');e.rel='stylesheet',e.href='{$src}',e.type='text/css',e.media='all';var a=document.getElementsByTagName('head')[0];a.appendChild(e)},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(lazyhead):window.addEventListener('load',lazyhead);</script>\n";
+            //$lazy_starter = "<script>var lazyhead=function(){var e=document.createElement('link');e.rel='stylesheet',e.href='{$src}',e.type='text/css',e.media='all';var a=document.getElementsByTagName('head')[0];a.appendChild(e)},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(lazyhead):window.addEventListener('load',lazyhead);</script>\n";
+            $lazy_starter = "<script>var lazyhead=function(){var e=document.createElement('link');e.rel='stylesheet',e.href='{$src}',e.type='text/css',e.media='all';var a=document.getElementsByTagName('head')[0];a.appendChild(e)};window.addEventListener('load',lazyhead);</script>\n";
             echo $lazy_starter;
         } else {
             echo "<link rel='stylesheet' href='$src' type='text/css' media='all' />\n";

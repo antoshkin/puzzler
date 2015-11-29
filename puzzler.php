@@ -2,12 +2,13 @@
 /*
 Plugin Name: Puzzler
 Plugin URI: http://buckler.dp.ua/~~~/
-Description: Simple auto combiner CSS and JS scripts for more fast load pages of site.
+Description: Simple auto aggregator CSS and JS scripts for more fast load pages of site.
 Version: 1.0
 Author: Igor Antoshkin
 Author URI: http://buckler.dp.ua
 */
 
+// -- in admin settings
 if ( is_admin() ) {
 
     // -- add admin menu item
@@ -79,7 +80,7 @@ if ( is_admin() ) {
 function puzzler_get_default_settings() {
     return array(
         'HStylesLazy'       => true ,
-        'HScriptsAsync'     => false,
+        'HScriptsAsync'     => true,
         'FStylesLazy'       => true ,
         'FScriptsAsync'     => true
     );
@@ -244,6 +245,11 @@ trait PUZZLER_Trait {
     private $_mapStateTemplate  = "/** ## %s ## **/\n";
     private $_mapStateDigest    = '';
 
+    /**
+     * Import data from WP_Scripts/WP_Styles in Puzzler object
+     * @param $object
+     * @throws Exception
+     */
     public function import( $object ) {
 
         if ( ! $object instanceof WP_Dependencies ) {
@@ -261,6 +267,13 @@ trait PUZZLER_Trait {
 
     }
 
+    /**
+     * Override do_items of WP_Scripts/WP_Styles
+     *
+     * @param bool|array $handles
+     * @param bool $group (0 - header , 1 - footer)
+     * @return array
+     */
     public function do_items( $handles = false, $group = false ) {
 
         $group = (int)$group;
@@ -306,6 +319,10 @@ trait PUZZLER_Trait {
         return $this->done;
     }
 
+    /**
+     * Set state (hash) for map ( order, group, src, some extra data ) of scripts/styles enqueued by wp_enqueue_,,,().
+     * It for efficient auto detect changes
+     */
     protected function puzzler_set_map_state() {
 
         $hash = 'NONE';
@@ -332,6 +349,11 @@ trait PUZZLER_Trait {
 
     }
 
+    /**
+     * Preparing full path aggregate file by depending of group (header/footer)
+     * @param $group (0 - header , 1 - footer)
+     *
+     */
     protected function puzzler_prepare_file_name( $group ) {
 
         $this->fileFullPath =  ABSPATH . static::$cacheDir . '/' ;
@@ -374,6 +396,11 @@ trait PUZZLER_Trait {
 
     }
 
+    /**
+     * Checks (content handles and map states) changes within group
+     * @param $group (0 - header , 1 - footer)
+     * @return bool : true - changes happened, false - no.
+     */
     protected function puzzler_check_change( $group ) {
 
         if ( empty ( $this->to_do ) ) return false;
@@ -410,7 +437,10 @@ trait PUZZLER_Trait {
 
     }
 
-
+    /**
+     * Combine handles and save aggregate file
+     * @param $group (0 - header , 1 - footer)
+     */
     protected function puzzler_combine( $group ) {
 
         $this->concat = "/** Combined by WP Puzzler plugin at " . current_time( 'mysql' ) . " **/\n";
@@ -433,6 +463,10 @@ trait PUZZLER_Trait {
 
     }
 
+    /**
+     * Get full src ( include version ) for script/link tags
+     * @return string
+     */
     protected function puzzler_get_src_tag() {
 
         $ver = md5_file( $this->fileFullPath );
@@ -442,6 +476,12 @@ trait PUZZLER_Trait {
 
     }
 
+    /**
+     * Detect local exist handle by src ( from wp_enqueue...() )
+     *
+     * @param $src
+     * @return bool|string - false for not exist | full local path
+     */
     protected function puzzler_get_src_local ( $src ) {
 
         $src = str_replace( "\\" , "/" , $src );
@@ -475,6 +515,9 @@ class PUZZLER_Scripts extends WP_Scripts {
     private $_asyncFoot;
 
 
+    /**
+     * Set settings of async (defer) load scripts
+     */
     public function __construct() {
 
         $settings = get_option( 'puzzler_settings' , puzzler_get_default_settings() );
@@ -483,6 +526,10 @@ class PUZZLER_Scripts extends WP_Scripts {
 
     }
 
+    /**
+     * Print some extra data before aggregate script tag depending by group
+     * @param $group (0 - header , 1 - footer)
+     */
     protected function puzzler_print_extra ( $group ) {
 
         foreach( $this->to_do as $key => $handle ) {
@@ -518,6 +565,10 @@ class PUZZLER_Scripts extends WP_Scripts {
 
     }
 
+    /**
+     * Add handle content to aggregate string
+     * @param $handle
+     */
     protected function puzzler_add_handle_content ( $handle ) {
 
         $obj = $this->registered[$handle];
@@ -526,6 +577,10 @@ class PUZZLER_Scripts extends WP_Scripts {
         $this->concat .= "\n" . file_get_contents( $this->puzzler_get_src_local( $src ) ) . "\n";
     }
 
+    /**
+     * Print script tag depending by group
+     * @param $group (0 - header , 1 - footer)
+     */
     protected function puzzler_print_tag( $group ) {
 
         if ( ! in_array( $group, $this->groups ) ) {
@@ -554,8 +609,12 @@ class PUZZLER_Styles extends WP_Styles {
     private $_lazyHead;
     private $_lazyFoot;
 
+    // -- temporarily storage head styles for separate late styles
     private $_headStyles;
 
+    /**
+     * Set settings of lazy load styles
+     */
     public function __construct() {
 
         $settings = get_option( 'puzzler_settings' , puzzler_get_default_settings() );
@@ -564,6 +623,11 @@ class PUZZLER_Styles extends WP_Styles {
 
     }
 
+    /**
+     * Pass styles only with media='all' and without extra data, else do behavior by default.
+     * For increased compatibility.
+     * @param $group (0 - header , 1 - footer)
+     */
     protected function puzzler_print_extra ( $group ) {
 
         foreach( $this->to_do as $key => $handle ) {
@@ -600,6 +664,10 @@ class PUZZLER_Styles extends WP_Styles {
 
     }
 
+    /**
+     * Convert late styles to fair footer group. WP by default considers it as header group.
+     * @param $group (0 - header , 1 - footer)
+     */
     protected function puzzler_styles_late2foot ( $group ) {
 
         if ( 0 === $group ) {
@@ -616,6 +684,11 @@ class PUZZLER_Styles extends WP_Styles {
 
     }
 
+    /**
+     * For all late styles (now footer group) do default behavior with lazy load opportunity
+     * @param $group (0 - header , 1 - footer)
+     * @return bool
+     */
     protected function puzzler_styles_foot_do_default ( $group ) {
 
         if ( 1 !== $group  ) {
@@ -623,7 +696,7 @@ class PUZZLER_Styles extends WP_Styles {
         }
 
         if ( $this->_lazyFoot && in_array( $group , $this->groups ) ) {
-            $lazy_starter = "<script>var _lazyFoot=function(){for(var e=document.getElementsByTagName('linklazy'),a=0;a<e.length;a++)e[a].outerHTML=e[a].outerHTML.replace(/linklazy/g,'link')},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(_lazyFoot):window.addEventListener('load',_lazyFoot);</script>\n";
+            $lazy_starter = "<script>var lazyFoot=function(){for(var e=document.getElementsByTagName('linklazy'),a=0;a<e.length;a++)e[a].outerHTML=e[a].outerHTML.replace(/linklazy/g,'link')},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(lazyFoot):window.addEventListener('load',lazyFoot);</script>\n";
             echo $lazy_starter;
         }
 
@@ -650,6 +723,11 @@ class PUZZLER_Styles extends WP_Styles {
         return true;
     }
 
+    /**
+     * Hook for replace 'link' to 'linklazy' tag for lazy load styles in footer
+     * @param $tag
+     * @return mixed
+     */
     public function puzzler_styles_change_tag ( $tag ) {
 
         $lazy_style = str_replace( 'link' , 'linklazy', $tag );
@@ -657,6 +735,10 @@ class PUZZLER_Styles extends WP_Styles {
 
     }
 
+    /**
+     * Add handle content to aggregate string and fix internal stylesheet links ( url, src )
+     * @param $handle
+     */
     protected function puzzler_add_handle_content ( $handle ) {
 
         global $src_dir;
@@ -685,6 +767,10 @@ class PUZZLER_Styles extends WP_Styles {
 
     }
 
+    /**
+     * Print link tag depending by group
+     * @param $group (0 - header , 1 - footer)
+     */
     protected function puzzler_print_tag( $group ) {
 
         if ( ! in_array( $group, $this->groups ) ) {
@@ -693,7 +779,7 @@ class PUZZLER_Styles extends WP_Styles {
 
         $src = $this->puzzler_get_src_tag();
         if ( 0 === $group && $this->_lazyHead ) {
-            //$lazy_starter = "<script>var _lazyHead=function(){var e=document.createElement('link');e.rel='stylesheet',e.href='{$src}',e.type='text/css',e.media='all';var a=document.getElementsByTagName('head')[0];a.appendChild(e)},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(_lazyHead):window.addEventListener('load',_lazyHead);</script>\n";
+            //$lazy_starter = "<script>var lazyHead=function(){var e=document.createElement('link');e.rel='stylesheet',e.href='{$src}',e.type='text/css',e.media='all';var a=document.getElementsByTagName('head')[0];a.appendChild(e)},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(lazyHead):window.addEventListener('load',lazyHead);</script>\n";
             $lazy_starter = "<script>var lazyHead=function(){var e=document.createElement('link');e.rel='stylesheet',e.href='{$src}',e.type='text/css',e.media='all';var a=document.getElementsByTagName('head')[0];a.appendChild(e)};window.addEventListener('load',lazyHead);</script>\n";
             echo $lazy_starter;
         } else {
@@ -703,6 +789,11 @@ class PUZZLER_Styles extends WP_Styles {
 
     }
 
+    /**
+     * Callback from @puzzler_add_handle_content() for fix internal stylesheet links ( url )
+     * @param $matches
+     * @return string
+     */
     private function puzzler_cb_internal_links_url( $matches ) {
 
         global $src_dir;
@@ -721,6 +812,11 @@ class PUZZLER_Styles extends WP_Styles {
 
     }
 
+    /**
+     * Callback from @puzzler_add_handle_content() for fix internal stylesheet links ( src )
+     * @param $matches
+     * @return string
+     */
     private function puzzler_cb_internal_links_src( $matches ) {
 
         global $src_dir;

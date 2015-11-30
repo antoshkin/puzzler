@@ -39,7 +39,7 @@ if ( is_admin() ) {
         $errors = puzzler_is_permissions_settings();
         if ( ! empty( $errors ) ) {
             foreach ( $errors as $e ) {
-                echo "<div class='notice notice-error'>  <p> {$e} </p> </div>";
+                echo "<div class='error'>  <p> {$e} </p> </div>";
             }
         }
 

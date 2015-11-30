@@ -8,7 +8,8 @@ Author: Igor Antoshkin
 Author URI: http://github.com/antoshkin/
 */
 
-if ( version_compare( phpversion(),  "5.4" , ">=") ) require_once( dirname(__FILE__) .'/classes-puzzler.php' );
+global $v_ok;
+if ( $v_ok = version_compare( phpversion(),  "5.4" , ">=") ) require_once( dirname(__FILE__) .'/classes-puzzler.php' );
 
 // -- in admin settings
 if ( is_admin() ) {
@@ -91,11 +92,14 @@ function puzzler_get_default_settings() {
 // -- on activate Puzzler plugin
 register_activation_hook( __FILE__, 'puzzler_plugin_activate' );
 function puzzler_plugin_activate() {
+    global $v_ok;
 
-    $cacheDir = ABSPATH . PUZZLER_Trait::$cacheDir;
+    if ( $v_ok ) {
+        $cacheDir = ABSPATH . PUZZLER_Trait::$cacheDir;
 
-    if ( ! file_exists( $cacheDir ) ) {
-        @mkdir( $cacheDir , 0777 , true );
+        if (!file_exists($cacheDir)) {
+            @mkdir($cacheDir, 0777, true);
+        }
     }
 
     $settings = get_option( 'puzzler_settings' , array() );
@@ -120,6 +124,7 @@ function puzzler_is_permissions_front() {
 
 // -- check permissions from plugin settings
 function puzzler_is_permissions_settings() {
+    global $v_ok;
 
     $errors = array();
 
@@ -127,9 +132,13 @@ function puzzler_is_permissions_settings() {
         $errors[] = __( 'Hey, Puzzler plugin requires PHP 5.4 or greater to run. Please, fix it problem :)' , 'puzzler');
     }
 
-    if ( ! is_writable( ABSPATH . PUZZLER_Trait::$cacheDir ) ) {
-        $errors[] = sprintf( __( 'Please, create %s folder with 0777 permissions' , 'puzzler'), ABSPATH . PUZZLER_Trait::$cacheDir );
-    };
+    if ( $v_ok ) {
+
+        if ( ! is_writable( ABSPATH . PUZZLER_Trait::$cacheDir ) ) {
+            $errors[] = sprintf(__('Please, create %s folder with 0777 permissions', 'puzzler'), ABSPATH . PUZZLER_Trait::$cacheDir);
+        };
+
+    }
 
     return $errors;
 

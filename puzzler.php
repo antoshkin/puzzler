@@ -215,7 +215,7 @@ function puzzler_header_styles( $handles = false ) {
         }
     }
 
-    return wp_styles()->do_items( $handles );
+    return $wp_styles->do_items( $handles );
 }
 
 function puzzler_header_scripts() {

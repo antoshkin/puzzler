@@ -205,8 +205,7 @@ function puzzler_header_styles( $handles = false ) {
         do_action( 'wp_print_styles' );
     }
 
-    _wp_scripts_maybe_doing_it_wrong( __FUNCTION__ );
-
+    _puzzler_scripts_maybe_doing_it_wrong( __FUNCTION__ );
     puzzler_class_changer();
 
     global $wp_styles;
@@ -233,6 +232,18 @@ function puzzler_header_scripts() {
     return print_head_scripts();
 }
 
+function _puzzler_scripts_maybe_doing_it_wrong( $function ) {
+    if ( did_action( 'init' ) ) {
+        return;
+    }
+
+    _doing_it_wrong( $function, sprintf(
+        __( 'Scripts and styles should not be registered or enqueued until the %1$s, %2$s, or %3$s hooks.' ),
+        '<code>wp_enqueue_scripts</code>',
+        '<code>admin_enqueue_scripts</code>',
+        '<code>login_enqueue_scripts</code>'
+    ), '3.3' );
+}
 
 function puzzler_class_changer() {
     global $wp_scripts, $wp_styles;

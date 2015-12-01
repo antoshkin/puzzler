@@ -1,4 +1,4 @@
-# Puzzler plugin for WP (beta)
+# Puzzler plugin for WP
 Puzzler plugin - it smart simple and fast auto aggregator (combiner) CSS and JS scripts for Wordpress.
 
 Require: PHP 5.4.

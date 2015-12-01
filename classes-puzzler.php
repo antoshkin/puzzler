@@ -460,7 +460,7 @@ class PUZZLER_Styles extends WP_Styles {
         }
 
         if ( $this->_lazyFoot && in_array( $group , $this->groups ) ) {
-            $lazy_starter = "<script>var lazyFoot=function(){for(var e=document.getElementsByTagName('linklazy'),a=0;a<e.length;a++)e[a].outerHTML=e[a].outerHTML.replace(/linklazy/g,'link')},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(lazyFoot):window.addEventListener('load',lazyFoot);</script>\n";
+            $lazy_starter = "<script>var lazyFoot=function(){for(var e=document.getElementsByTagName('linklazy'),a=0;a<e.length;a++)e[a].outerHTML=e[a].outerHTML.replace(/linklazy/g,'link')};window.addEventListener('load',lazyFoot);</script>\n";
             echo $lazy_starter;
         }
 

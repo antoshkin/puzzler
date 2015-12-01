@@ -35,4 +35,4 @@ function my_enqueue_scripts() {
 -
 Author: igor.antoshkin@gmail.com
 
-Please, you can donate me to paypal.
+Please, you can donate me to PayPal.

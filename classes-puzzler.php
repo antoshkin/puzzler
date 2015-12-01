@@ -51,6 +51,7 @@ trait PUZZLER_Trait {
          */
         if ( $this instanceof WP_Styles ) {
             $this->puzzler_styles_late2foot( $group );
+            $this->puzzler_lazyload_starter( $group );
             if ( $this->puzzler_styles_foot_do_default( $group ) ) return $this->done;
         }
 
@@ -414,6 +415,7 @@ class PUZZLER_Styles extends WP_Styles {
             $title  = ( isset($obj->extra['title']) ) ? false : true;
             $cond   = ( isset($obj->extra['conditional'] ) && $obj->extra['conditional'] ) ? false : true;
 
+
             if ( ! $media || ! $alt || ! $title || ! $cond) {
                 if ( parent::do_item( $handle ) ) {
 
@@ -459,21 +461,11 @@ class PUZZLER_Styles extends WP_Styles {
             return false;
         }
 
-        if ( $this->_lazyFoot && in_array( $group , $this->groups ) ) {
-            $lazy_starter = "<script>var lazyFoot=function(){for(var e=document.getElementsByTagName('linklazy'),a=0;a<e.length;a++)e[a].outerHTML=e[a].outerHTML.replace(/linklazy/g,'link')};window.addEventListener('load',lazyFoot);</script>\n";
-            echo $lazy_starter;
-        }
-
         foreach( $this->to_do as $key => $handle ) {
 
             // -- processing items only by current group
             if ( $this->groups[$handle] !== $group ) {
                 continue;
-            }
-
-            // -- change link tag, for lazy load
-            if ( $this->_lazyFoot ) {
-                add_filter('style_loader_tag', array( $this, 'puzzler_styles_change_tag' ) );
             }
 
             if ( parent::do_item( $handle ) ) {
@@ -487,14 +479,33 @@ class PUZZLER_Styles extends WP_Styles {
         return true;
     }
 
+    protected function puzzler_lazyload_starter( $group ) {
+
+        $lazy_starter = "\n";
+
+        remove_all_filters( 'style_loader_tag' );
+
+        if ( $this->_lazyHead && 0 === $group && in_array( $group , $this->groups ) ) {
+            add_filter('style_loader_tag', array( $this, 'puzzler_styles_lazy_tag' ) );
+            $lazy_starter="<script>var lazyHead=function(){for(var e=document.getElementsByTagName('head')[0],a=e.getElementsByTagName('link'),t=0;t<a.length;t++)a[t].outerHTML=a[t].outerHTML.replace(/lazy/g,'href')};window.addEventListener('load',lazyHead);</script>\n";
+        }
+
+        if ( $this->_lazyFoot && 1 === $group &&  in_array( $group , $this->groups ) ) {
+            add_filter('style_loader_tag', array( $this, 'puzzler_styles_lazy_tag' ) );
+            $lazy_starter="<script>var lazyFoot=function(){for(var e=document.getElementsByTagName('body')[0],a=e.getElementsByTagName('link'),t=0;t<a.length;t++)a[t].outerHTML=a[t].outerHTML.replace(/lazy/g,'href')};window.addEventListener('load',lazyFoot);</script>\n";
+        }
+
+        echo $lazy_starter;
+    }
+
     /**
-     * Hook for replace 'link' to 'linklazy' tag for lazy load styles in footer
+     * Hook for replace 'href' attr in 'link' tag for lazy load styles
      * @param $tag
      * @return mixed
      */
-    public function puzzler_styles_change_tag ( $tag ) {
+    public function puzzler_styles_lazy_tag ( $tag ) {
 
-        $lazy_style = str_replace( 'link' , 'linklazy', $tag );
+        $lazy_style = str_replace( 'href' , 'lazy', $tag );
         return $lazy_style;
 
     }
@@ -542,14 +553,13 @@ class PUZZLER_Styles extends WP_Styles {
         }
 
         $src = $this->puzzler_get_src_tag();
-        if ( 0 === $group && $this->_lazyHead ) {
-            //$lazy_starter = "<script>var lazyHead=function(){var e=document.createElement('link');e.rel='stylesheet',e.href='{$src}',e.type='text/css',e.media='all';var a=document.getElementsByTagName('head')[0];a.appendChild(e)},raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(lazyHead):window.addEventListener('load',lazyHead);</script>\n";
-            $lazy_starter = "<script>var lazyHead=function(){var e=document.createElement('link');e.rel='stylesheet',e.href='{$src}',e.type='text/css',e.media='all';var a=document.getElementsByTagName('head')[0];a.appendChild(e)};window.addEventListener('load',lazyHead);</script>\n";
-            echo $lazy_starter;
-        } else {
-            echo "<link rel='stylesheet' href='$src' type='text/css' media='all' />\n";
+
+        $href = 'href';
+        if ( ( 0 === $group && $this->_lazyHead ) || ( 1 === $group && $this->_lazyFoot ) ) {
+            $href = 'lazy';
         }
 
+        echo "<link rel='stylesheet' {$href}='$src' type='text/css' media='all' />\n";
 
     }
 

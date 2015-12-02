@@ -3,7 +3,7 @@
 Plugin Name: Puzzler
 Plugin URI: http://github.com/antoshkin/puzzler
 Description: Smart simple auto aggregator CSS and JS scripts for more fast load pages of site.
-Version: 0.1 beta
+Version: 1.0
 Author: Igor Antoshkin
 Author URI: http://github.com/antoshkin/
 */
@@ -122,7 +122,7 @@ function puzzler_is_permissions_front() {
 
 }
 
-// -- check permissions from plugin settings
+// -- check permissions in plugin settings
 function puzzler_is_permissions_settings() {
     global $v_ok;
 
@@ -172,10 +172,12 @@ if ( ! is_admin() && puzzler_is_permissions_front() ) {
 
 }
 
+// -- off spec rules for footer scripts in admin
 function puzzler_off_footer_scripts() {
     return false;
 }
 
+// -- off spec rules for header scripts in admin
 function puzzler_off_header_scripts() {
     return false;
 }
@@ -184,6 +186,9 @@ function puzzler_off_late_styles() {
     return false;
 }
 
+/**
+ * -- override WP_Scripts/WP_Styles by Puzzler classes through @puzzler_class_changer()
+ */
 function puzzler_footer_scripts() {
 
     puzzler_class_changer();
@@ -192,6 +197,9 @@ function puzzler_footer_scripts() {
     print_footer_scripts();
 }
 
+/**
+ * -- override WP_Scripts/WP_Styles by Puzzler classes through @puzzler_class_changer()
+ */
 function puzzler_header_styles( $handles = false ) {
     if ( '' === $handles ) { // for wp_head
         $handles = false;
@@ -218,6 +226,9 @@ function puzzler_header_styles( $handles = false ) {
     return $wp_styles->do_items( $handles );
 }
 
+/**
+ * -- override WP_Scripts/WP_Styles by Puzzler classes through @puzzler_class_changer()
+ */
 function puzzler_header_scripts() {
     if ( ! did_action('wp_print_scripts') ) {
         do_action( 'wp_print_scripts' );
@@ -232,6 +243,10 @@ function puzzler_header_scripts() {
     return print_head_scripts();
 }
 
+/**
+ * Func for high compatibility with early WP versions
+ * @param $function
+ */
 function _puzzler_scripts_maybe_doing_it_wrong( $function ) {
     if ( did_action( 'init' ) ) {
         return;
@@ -245,6 +260,10 @@ function _puzzler_scripts_maybe_doing_it_wrong( $function ) {
     ), '3.3' );
 }
 
+/**
+ * Core plugin function for override WP_Scripts/WP_Styles
+ * @throws Exception
+ */
 function puzzler_class_changer() {
     global $wp_scripts, $wp_styles;
 

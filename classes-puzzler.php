@@ -479,6 +479,10 @@ class PUZZLER_Styles extends WP_Styles {
         return true;
     }
 
+    /**
+     * Insert JS starter for lazy load css
+     * @param $group (0 - header , 1 - footer)
+     */
     protected function puzzler_lazyload_starter( $group ) {
 
         $lazy_starter = "\n";
@@ -492,7 +496,7 @@ class PUZZLER_Styles extends WP_Styles {
 
         if ( $this->_lazyFoot && 1 === $group &&  in_array( $group , $this->groups ) ) {
             add_filter('style_loader_tag', array( $this, 'puzzler_styles_lazy_tag' ) );
-            $lazy_starter="<script>var lazyFoot=function(){for(var e=document.getElementsByTagName('body')[0],a=e.getElementsByTagName('link'),t=0;t<a.length;t++)a[t].outerHTML=a[t].outerHTML.replace(/lazy/g,'href')};window.addEventListener('load',lazyFoot);</script>\n";
+            $lazy_starter="<script>var lazyFoot=function(){for(var e=document.getElementsByTagName('body')[0],a=e.getElementsByTagName('link'),t=0;t<a.length;t++)a[t].outerHTML=a[t].outerHTML.replace(/lazy/g,'href')};var raf=requestAnimationFrame||mozRequestAnimationFrame||webkitRequestAnimationFrame||msRequestAnimationFrame;raf?raf(lazyFoot):window.addEventListener('load',lazyFoot);</script>\n";
         }
 
         echo $lazy_starter;

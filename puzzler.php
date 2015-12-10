@@ -267,14 +267,17 @@ function _puzzler_scripts_maybe_doing_it_wrong( $function ) {
 function puzzler_class_changer() {
     global $wp_scripts, $wp_styles;
 
-    $scripts = new PUZZLER_Scripts;
-    $scripts->import( $wp_scripts );
-    $wp_scripts = $scripts;
+    if ( ! empty( $wp_scripts ) ) {
+        $scripts = new PUZZLER_Scripts;
+        $scripts->import( $wp_scripts );
+        $wp_scripts = $scripts;
+    }
 
-    $styles = new PUZZLER_Styles;
-    $styles->import( $wp_styles );
-    $wp_styles = $styles;
-
+    if ( ! empty( $wp_styles ) ) {
+        $styles = new PUZZLER_Styles;
+        $styles->import( $wp_styles );
+        $wp_styles = $styles;
+    }
 }
 
 ?>

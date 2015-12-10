@@ -234,7 +234,8 @@ trait PUZZLER_Trait {
      */
     protected function puzzler_get_src_tag() {
 
-        $ver = md5_file( $this->fileFullPath );
+        $fix_win = str_replace("\\", "/", $this->fileFullPath);
+        $ver = md5_file( $fix_win );
         $src_half = str_replace( ABSPATH , '', $this->fileFullPath );
 
         return $this->base_url .'/'. $src_half . '?' . $ver;
@@ -254,13 +255,16 @@ trait PUZZLER_Trait {
         $src_root_wp = ABSPATH . $src;
         $src_other = ABSPATH . str_replace( $this->base_url, '' , $src );
 
-
         if ( file_exists( $src_other ) ) {
             return $src_other;
         }
 
         if ( file_exists( $src_root_wp ) ) {
             return $src_root_wp;
+        }
+
+        if ( file_exists( $src ) ) {
+            return $src;
         }
 
         return false;
@@ -621,6 +625,18 @@ class PUZZLER_Styles extends WP_Styles {
      */
     private function getRelativePath( $basePath, $targetPath )
     {
+
+        // -- windows paths fix
+        $basePath   = str_replace( "\\" , "/" , $basePath );
+        $targetPath = str_replace( "\\" , "/" , $targetPath );
+        
+        $pattern     = '/(\D):/iu';
+        $replacement = "/$1";
+
+        $targetPath = preg_replace($pattern, $replacement, $targetPath);
+        $basePath   = preg_replace($pattern, $replacement, $basePath);
+        // -- 
+
         if ($basePath === $targetPath) {
             return '';
         }

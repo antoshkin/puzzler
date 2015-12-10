@@ -32,6 +32,7 @@ function my_enqueue_scripts() {
 - Autocorrect internal links in the CSS after aggregation. ( url/src )
 - Auto +20 scores in Google PageSpeed Insights
 - Async/lazy load aggregated scripts/styles
+- Windows compatible
 
 -
 Author: igor.antoshkin@gmail.com

@@ -144,8 +144,13 @@ function puzzler_is_permissions_settings() {
 
 }
 
+// -- check is login page
+function is_login_page() {
+    return in_array( $GLOBALS['pagenow'], array( 'wp-login.php', 'wp-register.php' ) );
+}
+
 // -- run on frontend
-if ( ! is_admin() && puzzler_is_permissions_front() ) {
+if ( ! is_admin() && ! is_login_page() && puzzler_is_permissions_front() ) {
 
 // Remove standard behavior
     remove_action('wp_print_footer_scripts', '_wp_footer_scripts');

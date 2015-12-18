@@ -95,7 +95,7 @@ function puzzler_plugin_activate() {
     global $v_ok;
 
     if ( $v_ok ) {
-        $cacheDir = ABSPATH . PUZZLER_Trait::$cacheDir;
+        $cacheDir = WP_CONTENT_DIR . '/' . PUZZLER_Trait::$cacheDir;
 
         if (!file_exists($cacheDir)) {
             @mkdir($cacheDir, 0777, true);
@@ -116,7 +116,7 @@ function puzzler_is_permissions_front() {
     if ( version_compare( phpversion(),  "5.4" , "<") ) return false;
 
     // -- check on writable cache dir
-    if ( ! is_writable( ABSPATH . PUZZLER_Trait::$cacheDir ) ) return false;
+    if ( ! is_writable( WP_CONTENT_DIR . '/' . PUZZLER_Trait::$cacheDir ) ) return false;
 
     return true;
 
@@ -134,8 +134,8 @@ function puzzler_is_permissions_settings() {
 
     if ( $v_ok ) {
 
-        if ( ! is_writable( ABSPATH . PUZZLER_Trait::$cacheDir ) ) {
-            $errors[] = sprintf(__('Please, create %s folder with 0777 permissions', 'puzzler'), ABSPATH . PUZZLER_Trait::$cacheDir);
+        if ( ! is_writable( WP_CONTENT_DIR . '/' . PUZZLER_Trait::$cacheDir ) ) {
+            $errors[] = sprintf(__('Please, create %s folder with 0777 permissions', 'puzzler'), WP_CONTENT_DIR . '/' . PUZZLER_Trait::$cacheDir);
         };
 
     }

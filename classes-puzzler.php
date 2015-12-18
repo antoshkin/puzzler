@@ -2,7 +2,7 @@
 
 trait PUZZLER_Trait {
 
-    public static $cacheDir     = 'wp-content/cache';
+    public static $cacheDir     = 'cache';
 
     private $fileFullPath       = '';
 
@@ -121,7 +121,7 @@ trait PUZZLER_Trait {
      */
     protected function puzzler_prepare_file_name( $group ) {
 
-        $this->fileFullPath =  ABSPATH . static::$cacheDir . '/' ;
+        $this->fileFullPath =  WP_CONTENT_DIR . '/' . static::$cacheDir . '/' ;
         $this->fileFullPath .= ( 0 === $group ) ? $this->fileNameHeader : $this->fileNameFooter;
 
     }
@@ -236,9 +236,9 @@ trait PUZZLER_Trait {
 
         $fix_win = str_replace("\\", "/", $this->fileFullPath);
         $ver = md5_file( $fix_win );
-        $src_half = str_replace( ABSPATH , '', $this->fileFullPath );
+        $src_half = str_replace( WP_CONTENT_DIR , '', $this->fileFullPath );
 
-        return $this->base_url .'/'. $src_half . '?' . $ver;
+        return $this->content_url . $src_half . '?' . $ver;
 
     }
 

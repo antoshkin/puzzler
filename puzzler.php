@@ -43,7 +43,7 @@ if ( is_admin() ) {
             }
         }
 
-        echo "<form id='form-puzzler' method='post'>";
+        echo "<form id='form-puzzler' method='post' onSubmit='document.getElementById(\"save_btn\").disabled=true;'>";
 
             echo "<input type='hidden' name='settings[HStylesLazy]' value='0' />";
             echo "<input id='hsl' type='checkbox' name='settings[HStylesLazy]' value='1' " . checked( $settings['HStylesLazy'] , true, false ) . " />";
@@ -71,7 +71,7 @@ if ( is_admin() ) {
 
             wp_nonce_field( 'puzzler_nonce' );
 
-        echo "<button onclick='this.disabled=true;'>" .__( 'Save' , 'puzzler' ). "</button>";
+        echo "<button id='save_btn'>" .__( 'Save' , 'puzzler' ). "</button>";
 
         echo "</form>";
         echo "</div>";
